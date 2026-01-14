@@ -1,0 +1,52 @@
+services:
+  redis:
+    image: redis:7
+    container_name: livekit-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - livekit
+
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit-server
+    hostname: livekit
+    depends_on:
+      - redis
+    restart: unless-stopped
+    command: ["--config", "/livekit.yaml"]
+    volumes:
+      - E:/NCC/egress/livekit.yaml:/livekit.yaml:ro
+    ports:
+      - "7880:7880"   # HTTP/WebSocket
+      - "7881:7881"   # RTC TCP
+      - "7882:7882/udp" # RTC UDP (single port mode)
+    networks:
+      livekit:
+        aliases:
+          - livekit
+
+  egress:
+    image: livekit/egress:latest
+    container_name: livekit-egress
+    depends_on:
+      - redis
+      - livekit
+    restart: unless-stopped
+    environment:
+      - EGRESS_CONFIG_FILE=/egress.yaml
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    shm_size: "1gb"
+    volumes:
+      - E:/NCC/egress/recordings:/recordings
+      - E:/NCC/egress/egress.yaml:/egress.yaml:ro
+    networks:
+      - livekit
+
+networks:
+  livekit:
+    driver: bridge

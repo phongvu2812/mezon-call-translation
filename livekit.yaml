@@ -1,0 +1,25 @@
+# Minimal LiveKit server config for local development + local Egress.
+# Docs: https://docs.livekit.io/transport/self-hosting/
+
+port: 7880
+
+# Generate tokens using these keys.
+keys:
+  APIForNzhv8Shvk: mOuEREmPmJqEM4RfupUGrGe6XdxJi3i0LPOdFPoQLkl
+
+redis:
+  address: redis:6379
+
+rtc:
+  # TCP port for WebRTC/ICE over TCP
+  tcp_port: 7881
+
+  # Single UDP port mode (simpler for LAN/dev). If you need NAT traversal across the internet,
+  # you may want a port range + TURN.
+  udp_port: 7882
+
+  # If you are recording locally on the same machine/LAN, this is usually fine.
+  use_external_ip: false
+
+logging:
+  level: info
