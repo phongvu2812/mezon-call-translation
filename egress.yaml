@@ -3,11 +3,11 @@ api_secret: mOuEREmPmJqEM4RfupUGrGe6XdxJi3i0LPOdFPoQLkl
 
 # LiveKit server websocket URL.
 # For local self-host (this docker-compose):
-ws_url: ws://livekit:7880
+ws_url: ws://172.16.220.242:7880
 insecure: true
 
 redis:
-  address: redis:6379
+  address: 172.16.220.242:6379
 
 file_outputs:
   local:

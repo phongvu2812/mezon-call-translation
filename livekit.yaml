@@ -8,7 +8,7 @@ keys:
   APIForNzhv8Shvk: mOuEREmPmJqEM4RfupUGrGe6XdxJi3i0LPOdFPoQLkl
 
 redis:
-  address: redis:6379
+  address: localhost:6379
 
 rtc:
   # TCP port for WebRTC/ICE over TCP

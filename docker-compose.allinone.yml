@@ -1,0 +1,22 @@
+# All-in-one LiveKit + Egress container
+# Giải quyết vấn đề network trên Windows Docker Desktop
+
+services:
+  livekit-allinone:
+    build:
+      context: .
+      dockerfile: Dockerfile.allinone
+    container_name: livekit-allinone
+    restart: unless-stopped
+    ports:
+      - "7880:7880"   # HTTP/WebSocket
+      - "7881:7881"   # RTC TCP
+      - "7882:7882/udp" # RTC UDP
+    cap_add:
+      - SYS_ADMIN
+    security_opt:
+      - seccomp=unconfined
+    shm_size: "2gb"
+    volumes:
+      - E:/NCC/egress/recordings:/recordings
+      - E:/NCC/egress/livekit.yaml:/etc/livekit/livekit.yaml:ro
