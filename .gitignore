@@ -1,2 +1,5 @@
 venv/
 recordings/
+mongodb-data/
+minio-data/
+__pycache__/
