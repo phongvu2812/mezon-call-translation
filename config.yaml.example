@@ -1,0 +1,17 @@
+# Required fields
+api_key: livekit_api_key
+api_secret: livekit_secret_key
+
+
+ws_url: livekit_url
+redis:
+  address: redis:6379
+  password: password
+
+# File upload config - only one of the following. Can be overridden per-request
+s3:
+  access_key: minioadmin
+  secret: minioadmin123
+  region: us-east-1
+  endpoint: http://minio:9000
+  bucket: livekit-recordings

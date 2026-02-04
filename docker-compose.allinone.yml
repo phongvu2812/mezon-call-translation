@@ -13,7 +13,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     volumes:
-      - E:/NCC/egress/minio-data:/data
+      - /home/nccsoft/projects/mezon-call-translation/demo-infra/minio-data:/data
     command: server /data --console-address ":9001"
     networks:
       - livekit
@@ -50,7 +50,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
       MONGO_INITDB_DATABASE: mezon_transcripts
     volumes:
-      - E:/NCC/egress/mongodb_data:/data/db
+      - /home/nccsoft/projects/mezon-call-translation/demo-infra/mongodb_data:/data/db
     networks:
       - livekit
     restart: unless-stopped
@@ -74,44 +74,29 @@ services:
       retries: 5
       start_period: 20s
 
-
-  # webhook-handler:
-  #   image: python:3.11-slim
-  #   container_name: webhook-handler
-  #   restart: unless-stopped
-  #   working_dir: /app
-  #   command: >
-  #     sh -c "pip install --no-cache-dir -r requirements.txt && python webhook_server.py"
-  #   volumes:
-  #     - E:/NCC/egress/webhook_server.py:/app/webhook_server.py:ro
-  #     - E:/NCC/egress/requirements.txt:/app/requirements.txt:ro
-  #     # - E:/NCC/egress/recordings:/recordings
-  #   ports:
-  #     - "8000:8000"
-  #   networks:
-  #     - livekit
-
-  livekit-allinone:
-    build:
-      context: .
-      dockerfile: Dockerfile.allinone
-    container_name: livekit-allinone
+  livekit-egress:
+    image: livekit/egress:latest
+    container_name: livekit-egress
     restart: unless-stopped
-    depends_on:
-      # - webhook-handler
-      - minio-init
-    ports:
-      - "7880:7880"   # HTTP/WebSocket
-      - "7881:7881"   # RTC TCP
-      - "7882:7882/udp" # RTC UDP
+
     cap_add:
       - SYS_ADMIN
-    security_opt:
-      - seccomp=unconfined
-    shm_size: "2gb"
+
+    environment:
+      EGRESS_CONFIG_FILE: /out/egress.yaml
+
     volumes:
-      # - E:/NCC/egress/recordings:/recordings
-      - E:/NCC/egress/livekit.yaml:/etc/livekit/livekit.yaml:ro
+      - /home/nccsoft/projects/mezon-call-translation/demo-infra:/out
+      - /dev/shm:/dev/shm
+
+    command: ["egress"]
+
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    
     networks:
       - livekit
 

@@ -1,5 +1,6 @@
 venv/
 recordings/
-mongodb-data/
+mongodb_data/
 minio-data/
 __pycache__/
+config.yaml
