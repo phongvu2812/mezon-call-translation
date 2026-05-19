@@ -13,7 +13,7 @@ services:
       MINIO_ROOT_USER: minioadmin
       MINIO_ROOT_PASSWORD: minioadmin123
     volumes:
-      - /home/nccsoft/projects/mezon-call-translation/demo-infra/minio-data:/data
+      - E:/NCC/egress/minio-data:/data
     command: server /data --console-address ":9001"
     networks:
       - livekit
@@ -24,6 +24,7 @@ services:
       retries: 3
 
   # Tạo bucket tự động khi khởi động
+
   minio-init:
     image: minio/mc:latest
     container_name: minio-init
@@ -34,8 +35,14 @@ services:
       /bin/sh -c "
       mc alias set myminio http://minio:9000 minioadmin minioadmin123;
       mc mb myminio/livekit-recordings --ignore-existing;
+
+      # allow download
       mc anonymous set download myminio/livekit-recordings;
-      echo 'Bucket created successfully!';
+
+      # 🔥 auto delete after 7 days
+      mc ilm rule add --expire-days 7 myminio/livekit-recordings;
+
+      echo 'Bucket created + lifecycle rule added!';
       "
     networks:
       - livekit
@@ -50,7 +57,7 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: rootpassword
       MONGO_INITDB_DATABASE: mezon_transcripts
     volumes:
-      - /home/nccsoft/projects/mezon-call-translation/demo-infra/mongodb_data:/data/db
+      - E:/NCC/egress/mongodb_data:/data/db
     networks:
       - livekit
     restart: unless-stopped
@@ -74,29 +81,45 @@ services:
       retries: 5
       start_period: 20s
 
-  livekit-egress:
-    image: livekit/egress:latest
-    container_name: livekit-egress
+  redis:
+    image: redis:7.2-alpine
+    container_name: redis
     restart: unless-stopped
+    command: redis-server /usr/local/etc/redis/redis.conf
+    volumes:
+      - E:/NCC/egress/redis.conf:/usr/local/etc/redis/redis.conf
+      - E:/NCC/egress/redis/data:/data
+    ports:
+      - "6378:6379"
+    deploy:
+      resources:
+        limits:
+          memory: 3g
+        reservations:
+          memory: 1g
 
+
+  livekit-allinone:
+    build:
+      context: .
+      dockerfile: Dockerfile.allinone
+    container_name: livekit-allinone
+    restart: unless-stopped
+    depends_on:
+      # - webhook-handler
+      - minio-init
+    ports:
+      - "7880:7880"   # HTTP/WebSocket
+      - "7881:7881"   # RTC TCP
+      - "7882:7882/udp" # RTC UDP
     cap_add:
       - SYS_ADMIN
-
-    environment:
-      EGRESS_CONFIG_FILE: /out/egress.yaml
-
+    security_opt:
+      - seccomp=unconfined
+    shm_size: "2gb"
     volumes:
-      - /home/nccsoft/projects/mezon-call-translation/demo-infra:/out
-      - /dev/shm:/dev/shm
-
-    command: ["egress"]
-
-    logging:
-      driver: json-file
-      options:
-        max-size: "10m"
-        max-file: "3"
-    
+      # - E:/NCC/egress/recordings:/recordings
+      - E:/NCC/egress/livekit.yaml:/etc/livekit/livekit.yaml:ro
     networks:
       - livekit
 
